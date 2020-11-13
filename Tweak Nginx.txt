@@ -1,0 +1,65 @@
+server {
+    listen 80;
+    listen [::]:80;
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+
+charset utf-8;
+client_max_body_size 20m;
+client_body_buffer_size 128k;
+fastcgi_hide_header Set-Cookie;
+gzip on;
+    gzip_min_length  1000;
+    gzip_buffers  16 8k;
+        gzip_comp_level   9;
+    gzip_types    text/plain application/x-javascript application/javascript text/xml text/css image/svg+xml image/jpeg;
+    gzip_vary on;
+location ~* \.(css|js|jpg|jpeg|gif|ico|png|bmp|pict|csv|doc|pdf|pls|ppt|tif|tiff|eps|ejs|swf|midi|mid|ttf|eot|woff|otf|svg|svgz|webp|docx|xlsx|xls|pptx|ps|class|jar|woff2|less|scss|svg+xml)$ 
+
+{
+add_header 'Access-Control-Allow-Origin' '*';
+    access_log        off;
+    log_not_found     off;
+    expires           360d;
+}
+
+    server_name rtq.almudrikah.com www.rtq.almudrikah.com;
+    root /var/www/html;
+    index index.php index.html index.htm;
+
+        location / {
+            index  index.html index.php;
+            if (!-e $request_filename){
+                rewrite ^/(.*) /index.php?r=$1 last;
+            }
+
+			if ($request_filename ~ "\.(css|js|jpg|jpeg|gif|ico|png|bmp|pict|csv|doc|pdf|pls|ppt|tif|tiff|eps|ejs|swf|midi|mid|ttf|eot|woff|otf|svg|svgz|webp|docx|xlsx|xls|pptx|ps|class|jar|woff2|less|scss|svg)$") 
+{
+                        add_header Pragma "public";
+                        add_header Cache-Control "public, must-revalidate, proxy-revalidate";
+                        add_header Access-Control-Allow-Origin *;
+                        access_log off;
+                        expires 360d;
+                        break;
+                }
+                        location ~ ^/assets/.+\.php(/|$) {
+            deny all;
+        }
+    }
+
+    location ~ \.php$ {
+#               try_files $uri =404;
+                include snippets/fastcgi-php.conf;
+#                fastcgi_split_path_info ^(.+\.php)(/.+)$;
+                fastcgi_pass_header Set-Cookie;
+                fastcgi_pass_header Cookie;
+                fastcgi_pass unix:/var/run/php/php7.4-fpm.sock;
+#                fastcgi_index index.php;
+#                fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+#                include fastcgi_params;
+        }
+
+        location ~ /\.ht {
+                deny all;
+        }
+}
